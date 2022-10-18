@@ -1,11 +1,13 @@
+// Express
 const express = require('express');
 const router = express.Router();
-
+// Database
 const db = require('../models/db')
-
-
-// Validator
+// Validator function
 const {validate_email, validate_name} = require('./validator');
+// Crypto
+const crypto = require('crypto');
+
 
 
 //	GET all
@@ -51,7 +53,7 @@ router.get('/:id', (req, res) => {
 		if(err) {
 			response.status = 0;
 			response.message = 'server error';
-			res.status(500).json(err);
+			res.status(500).json(response);
 			return;
 		}
 		if(result.length > 0) {
@@ -72,7 +74,7 @@ router.get('/:id', (req, res) => {
 router.post('/', (req, res) => {
 	const name = validate_name(req.body.name);
 	const email = validate_email(req.body.email);
-	const password = req.body.password;
+	const password = crypto.createHash('sha256').update(req.body.password).digest('hex');
 
 	if(!(name && email && password)) {
 		res.status(400).json({status: 0, message: 'invalid inputs'});
@@ -94,7 +96,7 @@ router.post('/', (req, res) => {
 	});
 });
 
-//PUT
+// PUT
 router.put('/:id', (req, res) => {
 	
 	let id = req.params.id;
@@ -117,7 +119,7 @@ router.put('/:id', (req, res) => {
 
 			const name = validate_name(req.body.name);
 			const email = validate_email(req.body.email);
-			const password = req.body.password;
+			const password = crypto.createHash('sha256').update(req.body.password).digest('hex');
 	
 			if(!(name && email && password)) {
 				res.status(400).json({status: 0, message: 'invalid inputs'});
@@ -143,6 +145,37 @@ router.put('/:id', (req, res) => {
 			response.status = 0;
 			response.message = 'user not found';
 			res.status(200).json(response);
+		}
+	});
+});
+
+// DELETE
+router.delete('/:id', (req, res) => {
+	let id = req.params.id;
+
+	if(isNaN(id)) {
+		res.status(400).json({status: 0, message: 'invalid userid'});
+		return;
+	}
+
+	const response = {};
+	const sql = "DELETE FROM users WHERE userid = ?";
+	db.query(sql, parseInt(id), (err, result, field) => {
+		if(err) {
+			response.status = 0;
+			response.message = 'server error';
+			res.status(500).json(response);
+			return;
+		}
+		if(result.affectedRows == 1) {
+			response.status = 1;
+			response.message = 'user deleted sucessfully';
+			res.status(200).json(response);
+		}
+		else if (result.affectedRows == 0) {
+			response.status = 0;
+			response.message = 'invalid user';
+			res.status(400).json(response);
 		}
 	});
 });
