@@ -8,6 +8,12 @@ const app = express();
 // Middleware for json from client
 app.use(express.json());
 
+
+// root
+app.get('/', (req, res) => {
+	res.redirect('/api/users');
+})
+
 // Routes
 const usersRouter = require('./routes/users.route.js');
 app.use('/api/users', usersRouter);
